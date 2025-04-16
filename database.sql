@@ -8,5 +8,28 @@
 -- This is test table. Remove this table and replace with your own tables. 
 CREATE TABLE test (
 	id serial PRIMARY KEY,
-	name VARCHAR ( 50 ) UNIQUE NOT NULL,
+	name VARCHAR ( 50 ) UNIQUE NOT NULL
+);
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Table: estate
+CREATE TABLE estate (
+    id_estate UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    width INTEGER NOT NULL,
+    length INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT now()
+);
+
+-- Table: tree
+CREATE TABLE tree (
+    id_tree UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id_estate UUID NOT NULL,
+    x INTEGER NOT NULL,
+    y INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT now(),
+    CONSTRAINT fk_estate
+        FOREIGN KEY(id_estate)
+        REFERENCES estate(id_estate)
+        ON DELETE CASCADE
 );

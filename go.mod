@@ -1,4 +1,4 @@
-module github.com/SawitProRecruitment/UserService
+module github.com/candrap89/droneTravelingDistance
 
 go 1.21
 

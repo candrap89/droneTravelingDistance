@@ -4,23 +4,42 @@
 package generated
 
 import (
-	"bytes"
-	"compress/gzip"
-	"encoding/base64"
 	"fmt"
 	"net/http"
-	"net/url"
-	"path"
-	"strings"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
 	"github.com/oapi-codegen/runtime"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
+
+// CreateEstateResponse defines model for CreateEstateResponse.
+type CreateEstateResponse struct {
+	// Id The ID of the created estate
+	Id *openapi_types.UUID `json:"id,omitempty"`
+}
+
+// CreateTreeRequest defines model for CreateTreeRequest.
+type CreateTreeRequest struct {
+	Height int `json:"height"`
+	X      int `json:"x"`
+	Y      int `json:"y"`
+}
+
+// CreateTreeResponse defines model for CreateTreeResponse.
+type CreateTreeResponse struct {
+	// Id The ID of the newly planted tree
+	Id *openapi_types.UUID `json:"id,omitempty"`
+}
 
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse struct {
 	Message string `json:"message"`
+}
+
+// Estate defines model for Estate.
+type Estate struct {
+	Length int32 `json:"length"`
+	Width  int32 `json:"width"`
 }
 
 // HelloResponse defines model for HelloResponse.
@@ -33,8 +52,20 @@ type GetHelloParams struct {
 	Id int `form:"id" json:"id"`
 }
 
+// PostEstateJSONRequestBody defines body for PostEstate for application/json ContentType.
+type PostEstateJSONRequestBody = Estate
+
+// PostEstateIdTreeJSONRequestBody defines body for PostEstateIdTree for application/json ContentType.
+type PostEstateIdTreeJSONRequestBody = CreateTreeRequest
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Create a new estate
+	// (POST /estate)
+	PostEstate(ctx echo.Context) error
+	// Plant a new tree in an estate
+	// (POST /estate/{id}/tree)
+	PostEstateIdTree(ctx echo.Context, id openapi_types.UUID) error
 	// This is just a test endpoint to get you started.
 	// (GET /hello)
 	GetHello(ctx echo.Context, params GetHelloParams) error
@@ -43,6 +74,31 @@ type ServerInterface interface {
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
+}
+
+// PostEstate converts echo context to params.
+func (w *ServerInterfaceWrapper) PostEstate(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.PostEstate(ctx)
+	return err
+}
+
+// PostEstateIdTree converts echo context to params.
+func (w *ServerInterfaceWrapper) PostEstateIdTree(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.PostEstateIdTree(ctx, id)
+	return err
 }
 
 // GetHello converts echo context to params.
@@ -91,90 +147,8 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
+	router.POST(baseURL+"/estate", wrapper.PostEstate)
+	router.POST(baseURL+"/estate/:id/tree", wrapper.PostEstateIdTree)
 	router.GET(baseURL+"/hello", wrapper.GetHello)
 
-}
-
-// Base64 encoded, gzipped, json marshaled Swagger object
-var swaggerSpec = []string{
-
-	"H4sIAAAAAAAC/6ySz47TMBDGX8UMHKMmwJ58R7AHOMAiDqseTDJNXCUe78y4oqry7mjcFroSB4Q42bK/",
-	"me83f07Q05IpYVIBfwLpJ1xCvb5jJv6MkikJ2kNmysgasX4vKBLG+qHHjOBBlGMaYV0bYHwqkXEA//hL",
-	"uG2uQvq+x15hbeADzjP9lQf+CEueLbrGNO4b8Ty8gOaf3U0Z044s+xx7vBCksJjq4/2DAWrUavpVkN0X",
-	"5EPsERo4IEukBB5eb7pNZ0rKmEKO4OFtfWogB51qGe1kyHYbUe2wGoNGSvcDeHiPWmuqIRwWVGQB/3iC",
-	"aA5PBfkIzRUsDnBboXLB5jK2m1nEpDgiw7puTX1ucIV503V29JQUU6UJOc+xrzztXqyq003CV4w78PCy",
-	"/b0o7WVL2ufjqx0dUHqOWc/deUBRx6iFk/Xorrv7b97P1/MP3p9I3Y5KGupOSFmWwEdjmqK4KG5fRF1w",
-	"aoiYhkwxqVNyI6o7UnGigRWHzTm3IB+uYyk8g4dJNfu2nakP80SisG7XnwEAAP//WTbcj08DAAA=",
-}
-
-// GetSwagger returns the content of the embedded swagger specification file
-// or error if failed to decode
-func decodeSpec() ([]byte, error) {
-	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
-	if err != nil {
-		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
-	}
-	zr, err := gzip.NewReader(bytes.NewReader(zipped))
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
-	}
-	var buf bytes.Buffer
-	_, err = buf.ReadFrom(zr)
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
-	}
-
-	return buf.Bytes(), nil
-}
-
-var rawSpec = decodeSpecCached()
-
-// a naive cached of a decoded swagger spec
-func decodeSpecCached() func() ([]byte, error) {
-	data, err := decodeSpec()
-	return func() ([]byte, error) {
-		return data, err
-	}
-}
-
-// Constructs a synthetic filesystem for resolving external references when loading openapi specifications.
-func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
-	res := make(map[string]func() ([]byte, error))
-	if len(pathToFile) > 0 {
-		res[pathToFile] = rawSpec
-	}
-
-	return res
-}
-
-// GetSwagger returns the Swagger specification corresponding to the generated code
-// in this file. The external references of Swagger specification are resolved.
-// The logic of resolving external references is tightly connected to "import-mapping" feature.
-// Externally referenced files must be embedded in the corresponding golang packages.
-// Urls can be supported but this task was out of the scope.
-func GetSwagger() (swagger *openapi3.T, err error) {
-	resolvePath := PathToRawSpec("")
-
-	loader := openapi3.NewLoader()
-	loader.IsExternalRefsAllowed = true
-	loader.ReadFromURIFunc = func(loader *openapi3.Loader, url *url.URL) ([]byte, error) {
-		pathToFile := url.String()
-		pathToFile = path.Clean(pathToFile)
-		getSpec, ok := resolvePath[pathToFile]
-		if !ok {
-			err1 := fmt.Errorf("path not found: %s", pathToFile)
-			return nil, err1
-		}
-		return getSpec()
-	}
-	var specData []byte
-	specData, err = rawSpec()
-	if err != nil {
-		return
-	}
-	swagger, err = loader.LoadFromData(specData)
-	if err != nil {
-		return
-	}
-	return
 }

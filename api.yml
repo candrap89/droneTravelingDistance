@@ -39,6 +39,64 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /estate:
+    post:
+      summary: Create a new estate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Estate"
+      responses:
+        '201':
+          description: Estate created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateEstateResponse"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /estate/{id}/tree:
+    post:
+      summary: Plant a new tree in an estate
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The ID of the estate to plant the tree in
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTreeRequest"
+      responses:
+        '201':
+          description: Tree planted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateTreeResponse"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '404':
+          description: Estate not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HelloResponse:
@@ -56,3 +114,45 @@ components:
       properties:
         message:
           type: string
+    Estate:
+      type: object
+      required:
+        - width
+        - length
+      properties:
+        width:
+          type: integer
+          format: int32
+        length:
+          type: integer
+          format: int32
+    CreateEstateResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The ID of the created estate
+    CreateTreeRequest:
+      type: object
+      required:
+        - x
+        - y
+        - height
+      properties:
+        x:
+          type: integer
+          example: 3
+        y:
+          type: integer
+          example: 2
+        height:
+          type: integer
+          example: 5
+    CreateTreeResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The ID of the newly planted tree

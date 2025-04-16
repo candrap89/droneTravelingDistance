@@ -1,8 +1,6 @@
 package main
 
 import (
-	"os"
-
 	"github.com/candrap89/droneTravelingDistance/generated"
 	"github.com/candrap89/droneTravelingDistance/handler"
 	"github.com/candrap89/droneTravelingDistance/repository"
@@ -22,7 +20,7 @@ func main() {
 }
 
 func newServer() *handler.Server {
-	dbDsn := os.Getenv("DATABASE_URL")
+	dbDsn := "postgresql://postgres:andromeda@localhost:5432/postgres?sslmode=disable"
 	var repo repository.RepositoryInterface = repository.NewRepository(repository.NewRepositoryOptions{
 		Dsn: dbDsn,
 	})
