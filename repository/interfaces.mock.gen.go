@@ -34,6 +34,51 @@ func (m *MockRepositoryInterface) EXPECT() *MockRepositoryInterfaceMockRecorder 
 	return m.recorder
 }
 
+// CreateEstate mocks base method.
+func (m *MockRepositoryInterface) CreateEstate(ctx context.Context, input CreateEstateInput) (CreateEstateOutput, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateEstate", ctx, input)
+	ret0, _ := ret[0].(CreateEstateOutput)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateEstate indicates an expected call of CreateEstate.
+func (mr *MockRepositoryInterfaceMockRecorder) CreateEstate(ctx, input interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateEstate", reflect.TypeOf((*MockRepositoryInterface)(nil).CreateEstate), ctx, input)
+}
+
+// CreateTree mocks base method.
+func (m *MockRepositoryInterface) CreateTree(ctx context.Context, input CreateTreeInput) (CreateTreeOutput, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateTree", ctx, input)
+	ret0, _ := ret[0].(CreateTreeOutput)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateTree indicates an expected call of CreateTree.
+func (mr *MockRepositoryInterfaceMockRecorder) CreateTree(ctx, input interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTree", reflect.TypeOf((*MockRepositoryInterface)(nil).CreateTree), ctx, input)
+}
+
+// GetDetailEstate mocks base method.
+func (m *MockRepositoryInterface) GetDetailEstate(ctx context.Context, input GetDetailEstateInput) (GetDetailEstateOutput, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDetailEstate", ctx, input)
+	ret0, _ := ret[0].(GetDetailEstateOutput)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDetailEstate indicates an expected call of GetDetailEstate.
+func (mr *MockRepositoryInterfaceMockRecorder) GetDetailEstate(ctx, input interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDetailEstate", reflect.TypeOf((*MockRepositoryInterface)(nil).GetDetailEstate), ctx, input)
+}
+
 // GetTestById mocks base method.
 func (m *MockRepositoryInterface) GetTestById(ctx context.Context, input GetTestByIdInput) (GetTestByIdOutput, error) {
 	m.ctrl.T.Helper()

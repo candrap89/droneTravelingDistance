@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const ApiUrl = "http://localhost:1323"
+const ApiUrl = "http://localhost:8080"
 
 func TestApi(t *testing.T) {
 	if testing.Short() {

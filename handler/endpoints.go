@@ -171,7 +171,7 @@ func (s *Server) GetEstateIdDronePlan(ctx echo.Context, id types.UUID) error {
 	})
 }
 
-func (s *Server) GetEstateIdDronePlane(ctx echo.Context, id types.UUID, params generated.GetEstateIdDronePlaneParams) error {
+func (s *Server) GetEstateIdDronePlanMax(ctx echo.Context, id types.UUID, params generated.GetEstateIdDronePlanMaxParams) error {
 	max := params.MaxDistance
 
 	estate, err := s.Repository.GetDetailEstate(ctx.Request().Context(), repository.GetDetailEstateInput{
