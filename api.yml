@@ -104,7 +104,7 @@ paths:
         - name: id
           in: path
           required: true
-          description: The ID of the estate to plant the tree in
+          description: The ID of the estate
           schema:
             type: string
             format: uuid
@@ -121,8 +121,77 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /estate/{id}/drone-plan:
+    GET:
+      summary: total distance of the drone
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The ID of the estate , drone plan
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: total distance of the drone
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TotalDistanceResponse"
+        '404':
+          description: Estate not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /estate/{id}/drone-plan-max:
+    GET:
+      summary: Get drone flight plan for an estate
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: UUID of the estate
+
+        - name: max-distance
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Maximum travel distance for the drone
+      responses:
+        '200':
+          description: Successful drone flight plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DronePlanResponse"
 components:
   schemas:
+    DronePlanResponse:
+      type: object
+      required:
+        - max_distance
+        - rest
+      properties:
+        max_distance:
+          type: integer
+          example: 100
+        rest:
+          $ref: "#/components/schemas/DroneRest"
+    DroneRest:
+      type: object
+      properties:
+        x:
+          type: integer
+          example: 1
+        y:
+          type: integer
+          example: 2
     EstateStatsResponse:
       type: object
       properties:
@@ -149,6 +218,12 @@ components:
         message:
           type: string
           example: Hello, World!
+    TotalDistanceResponse:
+      type: object
+      properties:
+        totalDistance:
+          type: integer
+          example: 100
     ErrorResponse:
       type: object
       required:

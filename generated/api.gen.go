@@ -31,6 +31,18 @@ type CreateTreeResponse struct {
 	Id *openapi_types.UUID `json:"id,omitempty"`
 }
 
+// DronePlanResponse defines model for DronePlanResponse.
+type DronePlanResponse struct {
+	MaxDistance int       `json:"max_distance"`
+	Rest        DroneRest `json:"rest"`
+}
+
+// DroneRest defines model for DroneRest.
+type DroneRest struct {
+	X *int `json:"x,omitempty"`
+	Y *int `json:"y,omitempty"`
+}
+
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse struct {
 	Message string `json:"message"`
@@ -50,6 +62,17 @@ type HelloResponse struct {
 	Message string `json:"message"`
 }
 
+// TotalDistanceResponse defines model for TotalDistanceResponse.
+type TotalDistanceResponse struct {
+	TotalDistance *int `json:"totalDistance,omitempty"`
+}
+
+// GetEstateIdDronePlaneParams defines parameters for GetEstateIdDronePlane.
+type GetEstateIdDronePlaneParams struct {
+	// MaxDistance Maximum travel distance for the drone
+	MaxDistance int `form:"max-distance" json:"max-distance"`
+}
+
 // GetHelloParams defines parameters for GetHello.
 type GetHelloParams struct {
 	Id int `form:"id" json:"id"`
@@ -66,6 +89,12 @@ type ServerInterface interface {
 	// Create a new estate
 	// (POST /estate)
 	PostEstate(ctx echo.Context) error
+	// total distance of the drone
+	// (GET /estate/{id}/drone-plan)
+	GetEstateIdDronePlan(ctx echo.Context, id openapi_types.UUID) error
+	// Get drone flight plan for an estate
+	// (GET /estate/{id}/drone-plane)
+	GetEstateIdDronePlane(ctx echo.Context, id openapi_types.UUID, params GetEstateIdDronePlaneParams) error
 	// Plant a new tree in an estate
 	// (GET /estate/{id}/stats)
 	GetEstateIdStats(ctx echo.Context, id openapi_types.UUID) error
@@ -88,6 +117,47 @@ func (w *ServerInterfaceWrapper) PostEstate(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.PostEstate(ctx)
+	return err
+}
+
+// GetEstateIdDronePlan converts echo context to params.
+func (w *ServerInterfaceWrapper) GetEstateIdDronePlan(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetEstateIdDronePlan(ctx, id)
+	return err
+}
+
+// GetEstateIdDronePlane converts echo context to params.
+func (w *ServerInterfaceWrapper) GetEstateIdDronePlane(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetEstateIdDronePlaneParams
+	// ------------- Required query parameter "max-distance" -------------
+
+	err = runtime.BindQueryParameter("form", true, true, "max-distance", ctx.QueryParams(), &params.MaxDistance)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter max-distance: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetEstateIdDronePlane(ctx, id, params)
 	return err
 }
 
@@ -170,6 +240,8 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	}
 
 	router.POST(baseURL+"/estate", wrapper.PostEstate)
+	router.GET(baseURL+"/estate/:id/drone-plan", wrapper.GetEstateIdDronePlan)
+	router.GET(baseURL+"/estate/:id/drone-plan-max", wrapper.GetEstateIdDronePlane)
 	router.GET(baseURL+"/estate/:id/stats", wrapper.GetEstateIdStats)
 	router.POST(baseURL+"/estate/:id/tree", wrapper.PostEstateIdTree)
 	router.GET(baseURL+"/hello", wrapper.GetHello)

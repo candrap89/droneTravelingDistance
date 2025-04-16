@@ -141,3 +141,82 @@ func (s *Server) GetEstateIdStats(ctx echo.Context, id types.UUID) error {
 		"median": median,
 	})
 }
+
+func (s *Server) GetEstateIdDronePlan(ctx echo.Context, id types.UUID) error {
+	// get detail estate
+	estate, err := s.Repository.GetDetailEstate(ctx.Request().Context(), repository.GetDetailEstateInput{
+		ID: id,
+	})
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, generated.ErrorResponse{
+			Message: "Failed to get estate details",
+		})
+	}
+
+	length := int(estate.Length)
+	width := int(estate.Width)
+	// crerate a slice/list of trees
+	trees := []Tree{}
+	for _, tree := range estate.Trees {
+		trees = append(trees, Tree{
+			X:      int(tree.X),
+			Y:      int(tree.Y),
+			Height: int(tree.Height),
+		})
+	}
+
+	totalDistance := CalculateDroneDistance(length, width, trees)
+	return ctx.JSON(http.StatusOK, generated.TotalDistanceResponse{
+		TotalDistance: &totalDistance,
+	})
+}
+
+func (s *Server) GetEstateIdDronePlane(ctx echo.Context, id types.UUID, params generated.GetEstateIdDronePlaneParams) error {
+	max := params.MaxDistance
+
+	estate, err := s.Repository.GetDetailEstate(ctx.Request().Context(), repository.GetDetailEstateInput{
+		ID: id,
+	})
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, generated.ErrorResponse{
+			Message: "Failed to get estate details",
+		})
+	}
+
+	length := int(estate.Length)
+	width := int(estate.Width)
+	// crerate a slice/list of trees
+	trees := []Tree{}
+	for _, tree := range estate.Trees {
+		trees = append(trees, Tree{
+			X:      int(tree.X),
+			Y:      int(tree.Y),
+			Height: int(tree.Height),
+		})
+	}
+
+	lastRest := MaxDistanceDrone(length, width, trees, max)
+	if lastRest == nil {
+		return ctx.JSON(http.StatusBadRequest, generated.ErrorResponse{
+			Message: "Invalid max distance",
+		})
+	}
+	if len(lastRest) != 2 {
+		return ctx.JSON(http.StatusBadRequest, generated.ErrorResponse{
+			Message: "Invalid last rest coordinates",
+		})
+	}
+	// Check if the last rest coordinates are within the estate bounds
+	if lastRest[0] < 1 || lastRest[0] > length || lastRest[1] < 1 || lastRest[1] > width {
+		return ctx.JSON(http.StatusBadRequest, generated.ErrorResponse{
+			Message: fmt.Sprintf("Last rest coordinates (%d, %d) are out of bounds for estate (%d, %d)", lastRest[0], lastRest[1], width, length),
+		})
+	}
+	return ctx.JSON(http.StatusOK, generated.DronePlanResponse{
+		MaxDistance: max,
+		Rest: generated.DroneRest{
+			X: &lastRest[0],
+			Y: &lastRest[1],
+		},
+	})
+}
