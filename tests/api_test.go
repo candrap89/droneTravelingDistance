@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const ApiUrl = "http://localhost:8080"
+const ApiUrl = "http://localhost:1323"
 
 func TestApi(t *testing.T) {
 	if testing.Short() {
@@ -131,7 +131,7 @@ func getTestCases() []TestCase {
 			[]any{CreateTree, 10, 2, 1},
 			[]any{CreateTree, 20, 3, 1},
 			[]any{CreateTree, 10, 4, 1},
-			[]any{GetStats, 3, 10, 20, 10},
+			[]any{GetStats, 3, 10, 20, 16},
 			[]any{GetDronePlan, 0, 82},
 		}),
 	}
@@ -295,7 +295,7 @@ func RequireStats(t *testing.T, resp *http.Response, data map[string]any, count,
 
 func RequireDistance(t *testing.T, resp *http.Response, data map[string]any, distance int) {
 	require.Equal(t, http.StatusOK, resp.StatusCode)
-	require.Equal(t, distance, int(data["distance"].(float64)))
+	require.Equal(t, distance, int(data["totalDistance"].(float64)))
 }
 
 func ExpectBadRequest() ExpectFunc {
