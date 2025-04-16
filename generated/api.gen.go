@@ -42,6 +42,9 @@ type Estate struct {
 	Width  int32 `json:"width"`
 }
 
+// EstateStatsResponse defines model for EstateStatsResponse.
+type EstateStatsResponse = map[string]interface{}
+
 // HelloResponse defines model for HelloResponse.
 type HelloResponse struct {
 	Message string `json:"message"`
@@ -64,6 +67,9 @@ type ServerInterface interface {
 	// (POST /estate)
 	PostEstate(ctx echo.Context) error
 	// Plant a new tree in an estate
+	// (GET /estate/{id}/stats)
+	GetEstateIdStats(ctx echo.Context, id openapi_types.UUID) error
+	// Plant a new tree in an estate
 	// (POST /estate/{id}/tree)
 	PostEstateIdTree(ctx echo.Context, id openapi_types.UUID) error
 	// This is just a test endpoint to get you started.
@@ -82,6 +88,22 @@ func (w *ServerInterfaceWrapper) PostEstate(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.PostEstate(ctx)
+	return err
+}
+
+// GetEstateIdStats converts echo context to params.
+func (w *ServerInterfaceWrapper) GetEstateIdStats(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetEstateIdStats(ctx, id)
 	return err
 }
 
@@ -148,6 +170,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	}
 
 	router.POST(baseURL+"/estate", wrapper.PostEstate)
+	router.GET(baseURL+"/estate/:id/stats", wrapper.GetEstateIdStats)
 	router.POST(baseURL+"/estate/:id/tree", wrapper.PostEstateIdTree)
 	router.GET(baseURL+"/hello", wrapper.GetHello)
 

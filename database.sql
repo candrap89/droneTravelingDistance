@@ -27,6 +27,7 @@ CREATE TABLE tree (
     id_estate UUID NOT NULL,
     x INTEGER NOT NULL,
     y INTEGER NOT NULL,
+	height INTEGER NOT NULL,
     created_at TIMESTAMP DEFAULT now(),
     CONSTRAINT fk_estate
         FOREIGN KEY(id_estate)

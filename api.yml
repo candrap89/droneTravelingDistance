@@ -49,7 +49,7 @@ paths:
             schema:
               $ref: "#/components/schemas/Estate"
       responses:
-        '201':
+        '200':
           description: Estate created successfully
           content:
             application/json:
@@ -79,7 +79,7 @@ paths:
             schema:
               $ref: "#/components/schemas/CreateTreeRequest"
       responses:
-        '201':
+        '200':
           description: Tree planted successfully
           content:
             application/json:
@@ -97,8 +97,50 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /estate/{id}/stats:
+    GET:
+      summary: Plant a new tree in an estate
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The ID of the estate to plant the tree in
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: statistic of the estate
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EstateStatsResponse"
+        '404':
+          description: Estate not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
+    EstateStatsResponse:
+      type: object
+      properties:
+      schema:
+        type: object
+        properties:
+          couunt:
+            type: integer
+            example: 10
+          max:
+            type: integer
+            example: 5
+          min:
+            type: integer
+            example: 1
+          median:
+            type: integer
+            example: 3
     HelloResponse:
       type: object
       required:

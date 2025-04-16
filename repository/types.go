@@ -28,3 +28,19 @@ type CreateTreeInput struct {
 type CreateTreeOutput struct {
 	ID uuid.UUID
 }
+
+type GetDetailEstateInput struct {
+	ID uuid.UUID
+}
+type GetDetailEstateOutput struct {
+	ID     uuid.UUID
+	Width  int // Width of the estate
+	Length int // Length of the estate
+	Trees  []Tree
+}
+type Tree struct {
+	ID     uuid.UUID
+	X      int // X coordinate of the tree
+	Y      int // Y coordinate of the tree
+	Height int // Height of the tree
+}

@@ -48,7 +48,7 @@ func (s *Server) PostEstate(ctx echo.Context) error {
 		})
 	}
 	// Return 201 with ID
-	return ctx.JSON(http.StatusCreated, generated.CreateEstateResponse{
+	return ctx.JSON(http.StatusOK, generated.CreateEstateResponse{
 		Id: &output.ID,
 	})
 }
@@ -62,11 +62,34 @@ func (s *Server) PostEstateIdTree(ctx echo.Context, id types.UUID) error {
 		})
 	}
 	// Basic validation
-	if input.X < 0 || input.Y < 0 {
+	if input.X <= 0 || input.Y <= 0 || input.Height <= 0 {
 		return ctx.JSON(http.StatusBadRequest, generated.ErrorResponse{
-			Message: "X and Y coordinates must be greater than or equal to 0",
+			Message: "X and Y coordinates and Height must be greater than or equal to 0",
 		})
 	}
+	// validate if the tree is out of bounds
+	estate, err := s.Repository.GetDetailEstate(ctx.Request().Context(), repository.GetDetailEstateInput{
+		ID: id,
+	})
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, generated.ErrorResponse{
+			Message: "Failed to get estate details",
+		})
+	}
+	if input.X > estate.Length || input.Y > estate.Width {
+		return ctx.JSON(http.StatusBadRequest, generated.ErrorResponse{
+			Message: fmt.Sprintf("Tree coordinates (%d, %d) are out of bounds for estate (%d, %d)", input.X, input.Y, estate.Width, estate.Length),
+		})
+	}
+	// Check if the tree already exists
+	for _, tree := range estate.Trees {
+		if tree.X == int(input.X) && tree.Y == int(input.Y) {
+			return ctx.JSON(http.StatusBadRequest, generated.ErrorResponse{
+				Message: fmt.Sprintf("Tree already exists at coordinates (%d, %d)", input.X, input.Y),
+			})
+		}
+	}
+
 	// Call repository to create tree
 	output, err := s.Repository.CreateTree(ctx.Request().Context(), repository.CreateTreeInput{
 		EstateID: id,
@@ -80,7 +103,41 @@ func (s *Server) PostEstateIdTree(ctx echo.Context, id types.UUID) error {
 		})
 	}
 	// Return 201 with ID
-	return ctx.JSON(http.StatusCreated, generated.CreateTreeResponse{
+	return ctx.JSON(http.StatusOK, generated.CreateTreeResponse{
 		Id: &output.ID,
+	})
+}
+
+func (s *Server) GetEstateIdStats(ctx echo.Context, id types.UUID) error {
+	// Call repository to get estate stats
+	estate, err := s.Repository.GetDetailEstate(ctx.Request().Context(), repository.GetDetailEstateInput{
+		ID: id,
+	})
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, generated.ErrorResponse{
+			Message: "Failed to get estate details",
+		})
+	}
+	fmt.Println("Estate:", estate.Trees)
+	// Calculate stats
+	count := len(estate.Trees)
+	min := int(estate.Trees[0].Height)
+	max := int(estate.Trees[0].Height)
+	median := int(estate.Trees[0].Height)
+	for _, tree := range estate.Trees {
+		if int(tree.Height) < min {
+			min = int(tree.Height)
+		}
+		if int(tree.Height) > max {
+			max = int(tree.Height)
+		}
+		median += int(tree.Height)
+	}
+	median /= count
+	return ctx.JSON(http.StatusOK, generated.EstateStatsResponse{
+		"count":  count,
+		"min":    min,
+		"max":    max,
+		"median": median,
 	})
 }
