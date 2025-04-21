@@ -32,10 +32,10 @@ func (r *Repository) CreateTree(ctx context.Context, input CreateTreeInput) (out
 }
 func (r *Repository) GetDetailEstate(ctx context.Context, input GetDetailEstateInput) (output GetDetailEstateOutput, err error) {
 	// Get the estate details
-	err = r.Db.QueryRowContext(ctx, "SELECT id_estate, width, length FROM estate WHERE id_estate = $1", input.ID).Scan(&output.ID, &output.Width, &output.Length)
-	if err != nil {
-		return
-	}
+	// err = r.Db.QueryRowContext(ctx, "SELECT id_estate, width, length FROM estate WHERE id_estate = $1", input.ID).Scan(&output.ID, &output.Width, &output.Length)
+	// if err != nil {
+	// 	return
+	// }
 	// Get the trees associated with the estate
 	rows, err := r.Db.QueryContext(ctx, "SELECT id_tree, x, y, height FROM tree WHERE id_estate = $1", input.ID)
 	if err != nil {
