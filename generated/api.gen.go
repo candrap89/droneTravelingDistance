@@ -4,20 +4,19 @@
 package generated
 
 import (
-	"bytes"
-	"compress/gzip"
-	"encoding/base64"
 	"fmt"
 	"net/http"
-	"net/url"
-	"path"
-	"strings"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
 	"github.com/oapi-codegen/runtime"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
+
+// CityVoteResponse defines model for CityVoteResponse.
+type CityVoteResponse struct {
+	City      string `json:"city"`
+	VoteCount int    `json:"voteCount"`
+}
 
 // CreateEstateResponse defines model for CreateEstateResponse.
 type CreateEstateResponse struct {
@@ -85,6 +84,15 @@ type GetHelloParams struct {
 	Id int `form:"id" json:"id"`
 }
 
+// GetVoteCountParams defines parameters for GetVoteCount.
+type GetVoteCountParams struct {
+	// EstimatedCost estimated cost for the city
+	EstimatedCost int `form:"estimated-cost" json:"estimated-cost"`
+
+	// CityName Name of the city
+	CityName string `form:"city-name" json:"city-name"`
+}
+
 // PostEstateJSONRequestBody defines body for PostEstate for application/json ContentType.
 type PostEstateJSONRequestBody = Estate
 
@@ -111,6 +119,9 @@ type ServerInterface interface {
 	// This is just a test endpoint to get you started.
 	// (GET /hello)
 	GetHello(ctx echo.Context, params GetHelloParams) error
+	// Get drone flight plan for an estate
+	// (GET /voteCount)
+	GetVoteCount(ctx echo.Context, params GetVoteCountParams) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -218,6 +229,31 @@ func (w *ServerInterfaceWrapper) GetHello(ctx echo.Context) error {
 	return err
 }
 
+// GetVoteCount converts echo context to params.
+func (w *ServerInterfaceWrapper) GetVoteCount(ctx echo.Context) error {
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetVoteCountParams
+	// ------------- Required query parameter "estimated-cost" -------------
+
+	err = runtime.BindQueryParameter("form", true, true, "estimated-cost", ctx.QueryParams(), &params.EstimatedCost)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter estimated-cost: %s", err))
+	}
+
+	// ------------- Required query parameter "city-name" -------------
+
+	err = runtime.BindQueryParameter("form", true, true, "city-name", ctx.QueryParams(), &params.CityName)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter city-name: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetVoteCount(ctx, params)
+	return err
+}
+
 // This is a simple interface which specifies echo.Route addition functions which
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
@@ -252,100 +288,6 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/estate/:id/stats", wrapper.GetEstateIdStats)
 	router.POST(baseURL+"/estate/:id/tree", wrapper.PostEstateIdTree)
 	router.GET(baseURL+"/hello", wrapper.GetHello)
+	router.GET(baseURL+"/voteCount", wrapper.GetVoteCount)
 
-}
-
-// Base64 encoded, gzipped, json marshaled Swagger object
-var swaggerSpec = []string{
-
-	"H4sIAAAAAAAC/+xYQU8rNxD+K67b40ICvF722IJoDlRPENTDE6rc9SRr5LUXe5yXCOW/V7Y3IZt12ECB",
-	"whMXFJnZ8TfzfTNj+54Wuqq1AoWW5vfUFiVULPz83QBDOLPIEC7B1lpZ8Ou10TUYFBCsBPd/OdjCiBqF",
-	"VjSn4xLI6JToCcESSBH8cALBE83oRJuKIc2pc4LTjOKiBppTi0aoKV0u1yv6n1sokC6zBsvYAFzCnQOL",
-	"XSAliGkZ1mHOqloCzX9dexIKYQrGu5q3TE5SJouWyXHXZJlRA3dOGOA0/0bn1H+TrSDc9ATw/FQq+C4X",
-	"pJZM+YSigWem89RoBV8lU7vBVGz+NxcWmSqglY6j4TCVM9OQ8ouBCc3pz4MHXQ0aUQ3CtpfecDuDrd0a",
-	"Zze7gF8m+W/zevRcXjtbnhmjzSN5AmvZNPyjm/hWiI1hKqxYZF3nEtQUS/9rTbJQeHJMU9F9F3xP2y1k",
-	"8cNstdtugFfI0G6mIhLbxV1o5xRuySaFuWLz/oqtgAum+su2EqpPAymCOwt/gJR6L8bXW8VvMvKXNpL/",
-	"lCzCfbUw1sjkaVMLu1Hgpll/gXbj9EtCTXTQmSig2UWxyltdjMYhNwJDeNcWDLkCMxOhPmdgbOxPR4fD",
-	"w6G31DUoVgua05OwlNGaYRmgDuBB3jqWro+E+RY34jSnX7XFs9V0MLHB/6b5IkpJIUQtsbqWogifDW6t",
-	"Vm0FPtZ4GufLNg9oHMTOFXIcsB4Phy+2a3KABgztHh8t1nPSuqIAaydOyoXP7JcXhNRuZgksIzVjUnAi",
-	"VO1im7auqphZ0LyZYYT5MbSa5t6i4XdwL/hywH2HPvAjymM5PxsH2plhFSAYS/Nvj4+46ItkJDgKs456",
-	"odI8CIpmK4WGWdcmM9vIQt9UvHlF4tMlnMh2KGKyGnyrFITII/Nf3o75RoVKI5lop/gW+T1Qp5Co63No",
-	"ynrE1yeO0Bg+1fAjq2F3Szho5v0+beH6elsGr8J8tr3vBZuLylUEDZvBRowTbTaCbKDcOTCLBywVmx+0",
-	"jrG7UHXG82sKsHvaTxB+tZ46Ta1NpL/MxJJrk38O2LUJ+WFqPRee0BIu2LyvK3yK4UOLYbsj+J/2v5wP",
-	"PtwQSF2gEon3VsKiKLbCfWft3+sHm4MgGgAi1NNqPyTiOUeBT+LfM/HbdR5eqPa49o34OL5lPf1oiDq+",
-	"h4W1BtLrieTlr6bdl83/5ZbaeplM6ML/f/3w+J5uqB+uPkqQMjy67OqR4SmpWwupI0aPpN/0YNF+NUtJ",
-	"CCwSA+iMenPa/tzB17gUlghLbp31tKGHCIrXWviOoskUkCy0IxaZQeCH0bcFM1vR4oykOS0R63wwkLpg",
-	"svTNbnmz/DcAAP//glY551sZAAA=",
-}
-
-// GetSwagger returns the content of the embedded swagger specification file
-// or error if failed to decode
-func decodeSpec() ([]byte, error) {
-	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
-	if err != nil {
-		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
-	}
-	zr, err := gzip.NewReader(bytes.NewReader(zipped))
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
-	}
-	var buf bytes.Buffer
-	_, err = buf.ReadFrom(zr)
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
-	}
-
-	return buf.Bytes(), nil
-}
-
-var rawSpec = decodeSpecCached()
-
-// a naive cached of a decoded swagger spec
-func decodeSpecCached() func() ([]byte, error) {
-	data, err := decodeSpec()
-	return func() ([]byte, error) {
-		return data, err
-	}
-}
-
-// Constructs a synthetic filesystem for resolving external references when loading openapi specifications.
-func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
-	res := make(map[string]func() ([]byte, error))
-	if len(pathToFile) > 0 {
-		res[pathToFile] = rawSpec
-	}
-
-	return res
-}
-
-// GetSwagger returns the Swagger specification corresponding to the generated code
-// in this file. The external references of Swagger specification are resolved.
-// The logic of resolving external references is tightly connected to "import-mapping" feature.
-// Externally referenced files must be embedded in the corresponding golang packages.
-// Urls can be supported but this task was out of the scope.
-func GetSwagger() (swagger *openapi3.T, err error) {
-	resolvePath := PathToRawSpec("")
-
-	loader := openapi3.NewLoader()
-	loader.IsExternalRefsAllowed = true
-	loader.ReadFromURIFunc = func(loader *openapi3.Loader, url *url.URL) ([]byte, error) {
-		pathToFile := url.String()
-		pathToFile = path.Clean(pathToFile)
-		getSpec, ok := resolvePath[pathToFile]
-		if !ok {
-			err1 := fmt.Errorf("path not found: %s", pathToFile)
-			return nil, err1
-		}
-		return getSpec()
-	}
-	var specData []byte
-	specData, err = rawSpec()
-	if err != nil {
-		return
-	}
-	swagger, err = loader.LoadFromData(specData)
-	if err != nil {
-		return
-	}
-	return
 }

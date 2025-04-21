@@ -170,8 +170,50 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DronePlanResponse"
+        '404':
+          description: city not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /voteCount:
+    GET:
+      summary: Get drone flight plan for an estate
+      parameters:
+        - name: estimated-cost
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: estimated cost for the city
+        - name: city-name
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Name of the city
+      responses:
+        '200':
+          description: Successful drone flight plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CityVoteResponse"
 components:
   schemas:
+    CityVoteResponse:
+      type: object
+      required:
+        - city
+        - voteCount
+      properties:
+        city:
+          type: string
+          example: "New York"
+        voteCount:
+          type: integer
+          example: 1000
     DronePlanResponse:
       type: object
       required:

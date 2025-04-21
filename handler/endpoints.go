@@ -1,11 +1,17 @@
 package handler
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"time"
 
 	"github.com/candrap89/droneTravelingDistance/generated"
+	"github.com/candrap89/droneTravelingDistance/kafka"
 	"github.com/candrap89/droneTravelingDistance/repository"
+	"github.com/candrap89/droneTravelingDistance/utils"
 	"github.com/labstack/echo/v4"
 	"github.com/oapi-codegen/runtime/types"
 )
@@ -16,6 +22,81 @@ func (s *Server) GetHello(ctx echo.Context, params generated.GetHelloParams) err
 	var resp generated.HelloResponse
 	resp.Message = fmt.Sprintf("Hello User %d", params.Id)
 	return ctx.JSON(http.StatusOK, resp)
+}
+
+type ApiResponse struct {
+	Page       int `json:"page"`
+	PerPage    int `json:"per_page"`
+	Total      int `json:"total"`
+	TotalPages int `json:"total_pages"`
+	Data       []struct {
+		City          string `json:"city"`
+		Name          string `json:"name"`
+		EstimatedCost int32  `json:"estimated_cost"`
+		UserRating    struct {
+			AverageRating float64 `json:"average_rating"`
+			Votes         int32   `json:"votes"`
+		} `json:"user_rating"`
+	} `json:"data"`
+}
+
+func (s *Server) GetVoteCount(c echo.Context, params generated.GetVoteCountParams) error {
+	url := fmt.Sprintf("https://jsonmock.hackerrank.com/api/food_outlets?city=%s&estimated_cost=%d", params.CityName, params.EstimatedCost)
+
+	// Set a timeout for the HTTP request
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Retry logic: 3 retries, 2s delay, exponential backoff
+	resp, err := utils.DoWithRetry(ctx, "GET", url, 3, 2*time.Second, true)
+	if err != nil {
+		fmt.Println("GET request failed after retries:", err)
+		return c.JSON(http.StatusBadRequest, generated.ErrorResponse{
+			Message: "Failed to fetch data from external API",
+		})
+	}
+	defer resp.Body.Close()
+
+	// Read the response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading response body:", err)
+		return c.JSON(http.StatusBadRequest, generated.ErrorResponse{
+			Message: "Error reading response body",
+		})
+	}
+
+	// Parse the JSON response
+	var apiResponse ApiResponse
+	err = json.Unmarshal(body, &apiResponse)
+	if err != nil {
+		fmt.Println("Error parsing JSON:", err)
+		return c.JSON(http.StatusBadRequest, generated.ErrorResponse{
+			Message: "Error parsing JSON",
+		})
+	}
+
+	// Check if any data matches the criteria
+	if len(apiResponse.Data) == 0 {
+		fmt.Println("No matching restaurant found.")
+		return c.JSON(http.StatusBadRequest, generated.ErrorResponse{
+			Message: "No matching restaurant found",
+		})
+	}
+
+	var voteCount int32
+	for _, data := range apiResponse.Data {
+		voteCount += data.UserRating.Votes
+	}
+
+	//publish kafka message
+	kafka.SendNewProductMessage(int(voteCount), params.CityName)
+
+	// Return the vote count of the first matching restaurant
+	return c.JSON(http.StatusOK, generated.CityVoteResponse{
+		City:      params.CityName,
+		VoteCount: int(voteCount),
+	})
 }
 
 // PostEstate is a placeholder implementation to satisfy the generated.ServerInterface.

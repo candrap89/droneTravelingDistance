@@ -60,7 +60,7 @@ func ApiKeyMiddleware(redisClient *redis.ClusterClient) echo.MiddlewareFunc {
 
 			apiKey := c.Request().Header.Get("X-API-Key")
 			if apiKey == "" {
-				return echo.NewHTTPError(http.StatusUnauthorized, "Missing API key")
+				return next(c)
 			}
 			fmt.Println("path:", c.Path())
 			path := strings.Trim(c.Path(), "/")
