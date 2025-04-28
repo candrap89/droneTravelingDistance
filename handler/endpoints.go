@@ -90,7 +90,17 @@ func (s *Server) GetVoteCount(c echo.Context, params generated.GetVoteCountParam
 	}
 
 	//publish kafka message
-	kafka.SendNewProductMessage(int(voteCount), params.CityName)
+	//kafka.SendNewProductMessage(int(voteCount), params.CityName)
+
+	//publish kafka message asynchronously
+	// Use a goroutine to send the message asynchronously
+	go func(votes int32, city string) {
+		err := kafka.SendNewProductMessage(int(votes), city)
+		if err != nil {
+			fmt.Println("Error sending Kafka message:", err)
+		}
+		fmt.Println("Kafka message sent successfully")
+	}(voteCount, params.CityName)
 
 	// Return the vote count of the first matching restaurant
 	return c.JSON(http.StatusOK, generated.CityVoteResponse{
