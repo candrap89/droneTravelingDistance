@@ -2,9 +2,10 @@ services:
   app:
     build: .
     ports:
-      - "8080:1323"
+      - "8081:1323"
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/database?sslmode=disable
+      REDIS_CLUSTER_NODES: host.docker.internal:7000,host.docker.internal:7001,host.docker.internal:7002
     depends_on:
       db:
         condition: service_healthy

@@ -24,6 +24,7 @@ func main() {
 			"localhost:7001",
 			"localhost:7002",
 		},
+		//Addrs:    strings.Split(os.Getenv("REDIS_CLUSTER_NODES"), ","),
 		Password: "",
 	})
 	e := echo.New()
@@ -39,6 +40,7 @@ func main() {
 
 func newServer() *handler.Server {
 	dbDsn := "postgresql://postgres:andromeda@localhost:5432/postgres?sslmode=disable"
+	//dbDsn := os.Getenv("DATABASE_URL")
 	var repo repository.RepositoryInterface = repository.NewRepository(repository.NewRepositoryOptions{
 		Dsn: dbDsn,
 	})
